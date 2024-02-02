@@ -1,18 +1,65 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Draw Dots and Lines</title>
 </head>
 <body>
-    <h1>jassonp-222117031</h1>
-    <canvas id="myCanvas" width="200" height="100"></canvas>
+  <canvas id="canvas" width="512" height="512"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let firstDotClicked = false;
+    let firstDot = { x: null, y: null };
+
+    canvas.addEventListener('click', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (!firstDotClicked) {
+        // Save first dot
+        firstDot.x = x;
+        firstDot.y = y;
+        drawDot(x, y, 'red');
+        firstDotClicked = true;
+    } else {
+        // Draw second dot and line
+        drawDot(x, y, 'blue');
+        drawLineDDA(firstDot.x, firstDot.y, x, y);
+        firstDotClicked = false;
+    }
+    });
+
+    function drawDot(x, y, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+    }
+
+    function drawLineDDA(x1, y1, x2, y2) {
+    // Calculate coordinates step by step
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    const steps = Math.max(Math.abs(dx), Math.abs(dy));
+
+    const xi = dx / steps;
+    const yi = dy / steps;
+
+    let x = x1, y = y1;
+    for (let i = 0; i <= steps; i++) {
+        ctx.beginPath();
+        ctx.arc(x, y, 1, 0, 2 * Math.PI); // smaller dot for DDA line
+        ctx.fillStyle = '#000'; // black color
+        ctx.fill();
+        x += xi;
+        y += yi;
+    }
+    }
+  </script>
 </body>
 </html>
-<script>
-    var c = document.getElementById("myCanvas");
-    var ctx = c.getContext("2d");
-    ctx.moveTo(0, 0);
-    ctx.lineTo(200, 100);
-    ctx.stroke();
-</script>
