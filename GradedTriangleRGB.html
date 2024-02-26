@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gradient Triangle</title>
+    <style>
+        canvas { border: 1px solid black; }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas" width="512" height="512"></canvas>
+    <input type="color" id="color1" value="#ff0000">
+    <input type="color" id="color2" value="#00ff00">
+    <input type="color" id="color3" value="#0000ff">
+    <script>
+      var canvas = document.getElementById('myCanvas');
+      var ctx = canvas.getContext('2d');
+      var clicks = [];
+  
+      canvas.addEventListener('click', function(event) {
+          var rect = canvas.getBoundingClientRect();
+          var x = event.clientX - rect.left;
+          var y = event.clientY - rect.top;
+          var colorPicker = document.getElementById('color' + (clicks.length + 1));
+          var color = hexToRgb(colorPicker.value);
+          clicks.push({x: x, y: y, color: color});
+          if (clicks.length == 3) {
+              drawGradientTriangle();
+              clicks = [];
+          }
+      });
+  
+      function drawGradientTriangle() {
+          var min_x = Math.min(clicks[0].x, clicks[1].x, clicks[2].x);
+          var max_x = Math.max(clicks[0].x, clicks[1].x, clicks[2].x);
+          var min_y = Math.min(clicks[0].y, clicks[1].y, clicks[2].y);
+          var max_y = Math.max(clicks[0].y, clicks[1].y, clicks[2].y);
+  
+          var planes = [
+              getPlane(clicks, 'r'),
+              getPlane(clicks, 'g'),
+              getPlane(clicks, 'b')
+          ];
+  
+          for (var y = min_y; y <= max_y; y++) {
+              for (var x = min_x; x <= max_x; x++) {
+                  if (insideTriangle({x: x, y: y}, clicks)) {
+                      var color = planes.map(function(plane) {
+                          return getInterpolation({x: x, y: y}, plane);
+                      });
+  
+                      ctx.fillStyle = 'rgb(' + color.join(',') + ')';
+                      ctx.fillRect(x, y, 1, 1);
+                  }
+              }
+          }
+      }
+  
+      function getPlane(points, component) {
+          var v1 = {x: points[1].x - points[0].x, y: points[1].y - points[0].y, z: points[1].color[component] - points[0].color[component]};
+          var v2 = {x: points[2].x - points[0].x, y: points[2].y - points[0].y, z: points[2].color[component] - points[0].color[component]};
+          var cross = {x: v1.y * v2.z - v1.z * v2.y, y: v1.z * v2.x - v1.x * v2.z, z: v1.x * v2.y - v1.y * v2.x};
+          return {a: cross.x, b: cross.y, c: cross.z, d: -cross.x * points[0].x - cross.y * points[0].y - cross.z * points[0].color[component]};
+      }
+  
+      function insideTriangle(point, triangle) {
+          var v0 = {x: triangle[2].x - triangle[0].x, y: triangle[2].y - triangle[0].y};
+          var v1 = {x: triangle[1].x - triangle[0].x, y: triangle[1].y - triangle[0].y};
+          var v2 = {x: point.x - triangle[0].x, y: point.y - triangle[0].y};
+  
+          var dot00 = dot(v0, v0);
+          var dot01 = dot(v0, v1);
+          var dot02 = dot(v0, v2);
+          var dot11 = dot(v1, v1);
+          var dot12 = dot(v1, v2);
+  
+          var invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+          var u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+          var v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+  
+          return (u >= 0) && (v >= 0) && (u + v < 1);
+      }
+  
+      function dot(v1, v2) {
+          return v1.x * v2.x + v1.y * v2.y;
+      }
+  
+      function getInterpolation(point, plane) {
+          return (-plane.d - plane.a * point.x - plane.b * point.y) / plane.c;
+      }
+  
+      function hexToRgb(hex) {
+          var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? {
+              r: parseInt(result[1], 16),
+              g: parseInt(result[2], 16),
+              b: parseInt(result[3], 16)
+          } : null;
+      }
+  </script>
+  
+  
+</body>
+</html>
